@@ -126,3 +126,18 @@ async def test_get_model(insert_model):
     assert _get_model.id == _model_for_get.id
     assert _get_model.var_1 == _model_for_get.var_1
     assert _get_model.var_2 == _model_for_get.var_2
+
+
+@pytest.mark.asyncio
+async def test_bulk_insert(
+    inited_model,
+):
+    model = inited_model(
+        var_1="1",
+        var_2="2",
+    )
+    response = await inited_model.bulk_insert_document(
+        documents=[model for _ in range(10)]
+    )
+    assert len(response.success) == 10
+    assert response.errors == []

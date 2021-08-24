@@ -1,15 +1,23 @@
+import dataclasses
 import datetime
 import functools
 import typing
-from typing import TypeVar, Type
+from typing import Type, TypeVar
 
 import elasticsearch7
 import pydantic
 
 from utils.exceptions import IndexWasNotInitialized
-from utils.index import set_index_meta, IndexMeta
+from utils.index import IndexMeta, set_index_meta
+from utils.typings import CreateAction
 
 DocType = TypeVar("DocType", bound="StrechyDocument")
+
+
+@dataclasses.dataclass(init=True)
+class BulkInsertResults:
+    errors: list[tuple[Type["StrechyDocument"], dict[str, typing.Any]]]
+    success: list[Type["StrechyDocument"]]
 
 
 class StrechyDocument(
@@ -60,11 +68,67 @@ class StrechyDocument(
         document.created = _date_created
         _db_return = await _index_meta.client.index(
             index=_index_meta.index_name,
-            body=document.json(exclude={"id"}),
+            body=document.json(
+                exclude={"id"} if document.id is None else None
+            ),
             id=document_id,
         )
         document.id = _db_return["_id"]
         return document
+
+    @staticmethod
+    def _bulk_create_actions(
+        documents: list[DocType], index_name: str
+    ) -> list[typing.Union[CreateAction, dict[str, typing.Any]]]:
+        """
+
+        :param documents:
+        :return:
+        """
+        _create_actions: list[
+            typing.Union[CreateAction, dict[str, typing.Any]]
+        ] = []
+        for document in documents:
+            _create_action: CreateAction = {
+                "create": {
+                    "_index": index_name,
+                }
+            }
+            if document.id is not None:
+                _create_action["create"].update({"_id": document.id})
+            _create_actions.append(_create_action)
+            _create_actions.append(document.dict(exclude={"id"}))
+        return _create_actions
+
+    @classmethod
+    async def bulk_insert_document(
+        cls,
+        documents: list[DocType],
+    ) -> BulkInsertResults:
+        _index_meta = cls._get_index_meta()
+
+        for _document in documents:
+            _document.created = datetime.datetime.utcnow()
+        _create_actions = cls._bulk_create_actions(
+            documents=documents, index_name=_index_meta.index_name
+        )
+
+        _db_return = await _index_meta.client.bulk(
+            body=_create_actions,
+        )
+
+        _bulk_insert_results = BulkInsertResults(success=[], errors=[])
+
+        for _document, _item in zip(documents, _db_return["items"]):
+            if _item["create"]["status"] == 201:
+                _document.id = _item["create"]["_id"]
+                _bulk_insert_results.success.append(_document)
+            else:
+                _bulk_insert_results.errors.append(
+                    (_document, _item["create"]["error"])
+                )
+
+        return _bulk_insert_results
 
     @classmethod
     async def init_index(

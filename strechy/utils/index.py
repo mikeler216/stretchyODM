@@ -4,7 +4,13 @@ from typing import Type
 import elasticsearch7
 import pydantic
 
-from utils.strechy_pydantic_types import KeyWordString
+from utils.strechy_pydantic_types import (
+    Byte,
+    Integer,
+    KeyWordString,
+    Long,
+    Short,
+)
 import utils.typings
 
 
@@ -45,20 +51,57 @@ async def set_index_meta(
     return _index_meta
 
 
+def update_mappings(
+    mappings: utils.typings.Mappings, field_name: str, field_type: str
+) -> None:
+    """
+
+    :param mappings:
+    :param field_name:
+    :param field_type:
+    :return:
+    """
+    mappings["mappings"]["properties"].update(
+        {field_name: {"type": field_type}}
+    )
+    return None
+
+
 def _get_index_mappings(
     model_class: Type[pydantic.BaseModel],
 ):
     mappings: utils.typings.Mappings = {"mappings": {"properties": {}}}
     for field in model_class.__fields__.values():
         if field.type_ is datetime.datetime:
-            mappings["mappings"]["properties"].update(
-                {field.name: {"type": "date"}}
+            update_mappings(
+                mappings=mappings, field_name=field.name, field_type="date"
             )
         elif field.type_ is KeyWordString:
-            mappings["mappings"]["properties"].update(
-                {field.name: {"type": "keyword"}}
+            update_mappings(
+                mappings=mappings, field_name=field.name, field_type="keyword"
             )
-        # create datetime automatic mapping
+        elif field.type_ is bool:
+            update_mappings(
+                mappings=mappings, field_name=field.name, field_type="boolean"
+            )
+        elif field.type_ is Long:
+            update_mappings(
+                mappings=mappings, field_name=field.name, field_type="long"
+            )
+        elif field.type_ is Integer:
+            update_mappings(
+                mappings=mappings, field_name=field.name, field_type="integer"
+            )
+        elif field.type_ is Short:
+            update_mappings(
+                mappings=mappings, field_name=field.name, field_type="short"
+            )
+        elif field.type_ is Byte:
+            update_mappings(
+                mappings=mappings, field_name=field.name, field_type="byte"
+            )
+
+            # create datetime automatic mapping
         if field.name in {"date_created"}:
             mappings["mappings"]["properties"].update(
                 {field.name: {"type": "date"}}
