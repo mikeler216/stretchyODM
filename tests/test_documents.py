@@ -5,7 +5,7 @@ import pytest
 
 from tests.conftest import KeyWordModelStrechyDocument
 from utils.index import _get_index_mappings
-from utils.strechy_pydantic_types import KeyWordString
+from utils.strechy_pydantic_types import KeyWord
 
 
 @pytest.mark.asyncio
@@ -85,7 +85,7 @@ def test_keyword_strechy_model(
     key_word_model,
 ):
     class _TestKeyWordString(pydantic.BaseModel):
-        var_1: KeyWordString
+        var_1: KeyWord
 
     _test = _TestKeyWordString(
         var_1="1",
@@ -93,7 +93,7 @@ def test_keyword_strechy_model(
 
     assert _test.dict() == {"var_1": "1"}
 
-    assert key_word_model.__fields__["var_1"].type_ is KeyWordString
+    assert key_word_model.__fields__["var_1"].type_ is KeyWord
 
     assert issubclass(key_word_model.__fields__["var_1"].type_, str)
 

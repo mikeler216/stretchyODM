@@ -7,7 +7,7 @@ from typing import Type, TypeVar
 import elasticsearch7
 import pydantic
 
-from utils.exceptions import IndexWasNotInitialized
+from utils.exceptions import IndexWasNotInitializedError
 from utils.index import IndexMeta, set_index_meta
 from utils.typings import CreateAction
 
@@ -81,9 +81,11 @@ class StrechyDocument(
         documents: list[DocType], index_name: str
     ) -> list[typing.Union[CreateAction, dict[str, typing.Any]]]:
         """
-
-        :param documents:
-        :return:
+        Create Elasticsearch bulk create actions.
+        Important Actions must be [action, document, action, document]
+        :param documents: StrechyDocument
+        :param index_name: Elasticsearch index name from meta
+        :return: Elasticsearch create actions for bulk api
         """
         _create_actions: list[
             typing.Union[CreateAction, dict[str, typing.Any]]
@@ -105,6 +107,14 @@ class StrechyDocument(
         cls,
         documents: list[DocType],
     ) -> BulkInsertResults:
+        """
+        Bulk insert document if documents already have an ID it will be
+        used if not it will be created by Elasticsearch.
+        :param documents: StrechyDocument with IDS or without
+        :return: BulkInsertResults:
+          one list of success of documents with IDs
+          one list of error of tuple of documents and error
+        """
         _index_meta = cls._get_index_meta()
 
         for _document in documents:
@@ -135,12 +145,18 @@ class StrechyDocument(
         cls: Type[DocType],
         client: elasticsearch7.AsyncElasticsearch,
     ):
+        """
+        And index meta to object must be used before class access APIs
+        :param client: Elasticsearch client
+        :return: None
+        """
         _index_meta = await set_index_meta(
             client=client,
             index_name=cls.__name__.lower(),
             model_class=cls,
         )
         setattr(cls, "IndexMeta", _index_meta)
+        return None
 
     @classmethod
     def _get_index_meta(
@@ -152,5 +168,5 @@ class StrechyDocument(
         """
         collection_meta = getattr(cls, "IndexMeta", None)
         if collection_meta is None:
-            raise IndexWasNotInitialized()
+            raise IndexWasNotInitializedError()
         return collection_meta
