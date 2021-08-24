@@ -13,3 +13,5 @@ COPY test-requirements.txt /
 RUN pip install -r /test-requirements.txt
 
 COPY strechy /
+
+COPY tests /tests

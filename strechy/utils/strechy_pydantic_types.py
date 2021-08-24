@@ -21,7 +21,7 @@ else:
             yield cls.validate
 
         @classmethod
-        def validate(cls, v: str):
+        def validate(cls, v: str) -> str:
             if not isinstance(v, str):
                 raise TypeError("str type required")
             return str(v)
@@ -38,7 +38,7 @@ else:
             yield cls.validate
 
         @classmethod
-        def validate(cls, v: int):
+        def validate(cls, v: int) -> int:
             if v <= cls.gte or v >= cls.lte:
                 raise ValueError(f"Value out of range {cls.gte} - {cls.lte}")
             if not isinstance(v, int):
