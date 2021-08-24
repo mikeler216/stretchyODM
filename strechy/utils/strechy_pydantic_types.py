@@ -3,16 +3,20 @@ from typing import TYPE_CHECKING
 from pydantic.validators import int_validator, str_validator
 
 if TYPE_CHECKING:
-    KeyWordString = str
+    KeyWord = str
     Long = int
     Short = int
     Byte = int
     Integer = int
 else:
 
-    class KeyWordString(
+    class KeyWord(
         str,
     ):
+        """
+        Type representing keyword(str) in Elasticsearch
+        """
+
         ...
 
         @classmethod
@@ -29,6 +33,10 @@ else:
     class BaseIntegerField(
         int,
     ):
+        """
+        Base for integer fields in Elasticsearch
+        """
+
         gte = 1
         lte = 1
 
@@ -48,23 +56,39 @@ else:
     class Long(
         BaseIntegerField,
     ):
+        """
+        Type representing a long type in Elasticsearch
+        """
+
         gte = -(2 ** 63)
         lte = 2 ** 63 - 1
 
     class Integer(
         BaseIntegerField,
     ):
+        """
+        Type representing an integer type in Elasticsearch
+        """
+
         gte = -(2 ** 31)
         lte = 2 ** 31 - 1
 
     class Short(
         BaseIntegerField,
     ):
+        """
+        Type representing short type type in Elasticsearch
+        """
+
         gte = -32768
         lte = 32768
 
     class Byte(
         BaseIntegerField,
     ):
+        """
+        Type representing byte type in Elasticsearch
+        """
+
         gte = -128
         lte = 128

@@ -7,7 +7,7 @@ import pydantic
 from utils.strechy_pydantic_types import (
     Byte,
     Integer,
-    KeyWordString,
+    KeyWord,
     Long,
     Short,
 )
@@ -70,13 +70,19 @@ def update_mappings(
 def _get_index_mappings(
     model_class: Type[pydantic.BaseModel],
 ):
+    """
+    Get elasticsearch field mapped by using the pydantic type
+    :param model_class: StrechyDocument
+    :return: The mapping of the field types if a
+    field type is unknown it will leave elasticsearch to decide
+    """
     mappings: utils.typings.Mappings = {"mappings": {"properties": {}}}
     for field in model_class.__fields__.values():
         if field.type_ is datetime.datetime:
             update_mappings(
                 mappings=mappings, field_name=field.name, field_type="date"
             )
-        elif field.type_ is KeyWordString:
+        elif field.type_ is KeyWord:
             update_mappings(
                 mappings=mappings, field_name=field.name, field_type="keyword"
             )
@@ -114,7 +120,14 @@ async def init_strechy(
     client: elasticsearch7.AsyncElasticsearch,
     documents: list,
 ):
+    """
+
+    :param client: The elasticsearch Async client
+    :param documents: A list of documents Types to init them with the client
+    :return: None
+    """
     for document in documents:
         await document.init_index(
             client=client,
         )
+    return None
