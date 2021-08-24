@@ -14,12 +14,10 @@ class RunIdCacheType(TypedDict):
     firstmodelstrechydocument: list[str]
 
 
-_RUN_ID_CACHE: RunIdCacheType = {
-    "firstmodelstrechydocument": []
-}
+_RUN_ID_CACHE: RunIdCacheType = {"firstmodelstrechydocument": []}
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def get_id_cache() -> RunIdCacheType:
     return _RUN_ID_CACHE
 
@@ -32,7 +30,7 @@ class Config(
 
 
 @pytest.fixture(
-    scope='session',
+    scope="session",
 )
 def app_config():
     yield Config()
@@ -40,14 +38,14 @@ def app_config():
 
 @pytest.mark.asyncio
 @pytest.fixture(
-    scope='session',
+    scope="session",
 )
 async def elasticsearch_client(
-        app_config,
+    app_config,
 ):
     _elasticsearch_client = elasticsearch7.AsyncElasticsearch(
         hosts=[
-            f'{app_config.ELASTICSEARCH_HOSTS}:{app_config.ELASTICSEARCH_PORT}'
+            f"{app_config.ELASTICSEARCH_HOSTS}:{app_config.ELASTICSEARCH_PORT}"
         ],
     )
     yield _elasticsearch_client
@@ -56,14 +54,14 @@ async def elasticsearch_client(
 
 @pytest.mark.asyncio
 @pytest.fixture(
-    scope='session',
+    scope="session",
 )
 def elasticsearch_client_sync(
-        app_config,
+    app_config,
 ):
     _elasticsearch_client = elasticsearch7.Elasticsearch(
         hosts=[
-            f'{app_config.ELASTICSEARCH_HOSTS}:{app_config.ELASTICSEARCH_PORT}'
+            f"{app_config.ELASTICSEARCH_HOSTS}:{app_config.ELASTICSEARCH_PORT}"
         ],
     )
     yield _elasticsearch_client
@@ -71,31 +69,31 @@ def elasticsearch_client_sync(
 
 
 @pytest.mark.asyncio
-@pytest.fixture(scope='function', autouse=True)
+@pytest.fixture(scope="function", autouse=True)
 async def delete_documents(
-        get_id_cache,
-        elasticsearch_client,
+    get_id_cache,
+    elasticsearch_client,
 ):
     yield
-    if get_id_cache['firstmodelstrechydocument']:
+    if get_id_cache["firstmodelstrechydocument"]:
         _db_return = await elasticsearch_client.delete_by_query(
-            index='firstmodelstrechydocument',
+            index="firstmodelstrechydocument",
             body={
-                'query': {
-                    'ids': {
-                        'values': get_id_cache['firstmodelstrechydocument'],
+                "query": {
+                    "ids": {
+                        "values": get_id_cache["firstmodelstrechydocument"],
                     },
                 },
-            }
+            },
         )
-        assert _db_return['deleted'] > 0
+        assert _db_return["deleted"] > 0
 
-    get_id_cache['firstmodelstrechydocument'] = []
+    get_id_cache["firstmodelstrechydocument"] = []
 
 
 @pytest.fixture(
     autouse=True,
-    scope='session',
+    scope="session",
 )
 def event_loop():
     loop = asyncio.get_event_loop()
@@ -117,17 +115,17 @@ def test_model() -> Type[FirstModelStrechyDocument]:
 
 
 @pytest.mark.asyncio
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 async def inited_model(
-        test_model,
-        elasticsearch_client,
+    test_model,
+    elasticsearch_client,
 ) -> Type[FirstModelStrechyDocument]:
     await test_model.init_index(
         client=elasticsearch_client,
     )
     yield test_model
 
-    setattr(test_model, 'IndexMeta', None)
+    setattr(test_model, "IndexMeta", None)
 
 
 class DateTimeModelStrechyDocument(
@@ -147,27 +145,22 @@ class KeyWordModelStrechyDocument(
         return 1
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def datetime_model() -> Type[DateTimeModelStrechyDocument]:
     return DateTimeModelStrechyDocument
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def key_word_model() -> Type[KeyWordModelStrechyDocument]:
     return KeyWordModelStrechyDocument
 
 
 @pytest.mark.asyncio
 @pytest.fixture
-async def insert_model(
-    request,
-    elasticsearch_client
-):
+async def insert_model(request, elasticsearch_client):
     model: StrechyDocument = request.param
     await model.init_index(client=elasticsearch_client)
     await model.insert_document(document=model)
     yield
     index_meta = model._get_index_meta()
-    await index_meta.client.indices.delete(
-        index=index_meta.index_name
-    )
+    await index_meta.client.indices.delete(index=index_meta.index_name)

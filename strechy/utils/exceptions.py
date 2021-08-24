@@ -1,5 +1,3 @@
-
-
 class StrechyExceptionsBase(Exception):
     pass
 

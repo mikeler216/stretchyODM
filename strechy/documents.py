@@ -26,7 +26,7 @@ class StrechyDocument(
 
     @functools.cached_property
     def _index_meta(
-            self,
+        self,
     ) -> IndexMeta:
         return StrechyDocument._get_index_meta()
 
@@ -40,8 +40,8 @@ class StrechyDocument(
             index=_index_meta.index_name,
             id=document_id,
         )
-        _document = _db_return_value['_source']
-        _document['id'] = _db_return_value.pop('_id')
+        _document = _db_return_value["_source"]
+        _document["id"] = _db_return_value.pop("_id")
         return cls(
             **_document,
         )
@@ -53,30 +53,30 @@ class StrechyDocument(
         document_id: typing.Optional[str] = None,
     ) -> DocType:
         if type(document) is not cls:
-            raise TypeError(f'document must be of type: {cls.__name__}')
+            raise TypeError(f"document must be of type: {cls.__name__}")
 
         _index_meta = cls._get_index_meta()
         _date_created = datetime.datetime.utcnow()
         document.created = _date_created
         _db_return = await _index_meta.client.index(
             index=_index_meta.index_name,
-            body=document.json(exclude={'id'}),
+            body=document.json(exclude={"id"}),
             id=document_id,
         )
-        document.id = _db_return['_id']
+        document.id = _db_return["_id"]
         return document
 
     @classmethod
     async def init_index(
-            cls: Type[DocType],
-            client: elasticsearch7.AsyncElasticsearch,
+        cls: Type[DocType],
+        client: elasticsearch7.AsyncElasticsearch,
     ):
         _index_meta = await set_index_meta(
             client=client,
             index_name=cls.__name__.lower(),
             model_class=cls,
         )
-        setattr(cls, 'IndexMeta', _index_meta)
+        setattr(cls, "IndexMeta", _index_meta)
 
     @classmethod
     def _get_index_meta(
