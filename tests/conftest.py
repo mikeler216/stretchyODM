@@ -7,7 +7,7 @@ import pydantic
 import pytest
 
 from documents import StrechyDocument
-from utils.strechy_pydantic_types import KeyWordString
+from utils.strechy_pydantic_types import KeyWord
 
 
 class RunIdCacheType(TypedDict):
@@ -131,14 +131,14 @@ async def inited_model(
 class DateTimeModelStrechyDocument(
     StrechyDocument,
 ):
-    var_1: KeyWordString
+    var_1: KeyWord
     var_2: datetime.datetime
 
 
 class KeyWordModelStrechyDocument(
     StrechyDocument,
 ):
-    var_1: KeyWordString
+    var_1: KeyWord
     var_2: datetime.datetime
 
     def __len__(self):

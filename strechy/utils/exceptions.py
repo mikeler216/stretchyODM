@@ -2,5 +2,9 @@ class StrechyExceptionsBase(Exception):
     pass
 
 
-class IndexWasNotInitialized(StrechyExceptionsBase):
+class IndexWasNotInitializedError(StrechyExceptionsBase):
+    """
+    Error StrechyDocument Type was accessed before Index init
+    """
+
     pass
